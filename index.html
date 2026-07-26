@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice-Based Transport Enquiry System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="dark-theme">
+    <div id="app" class="app-container">
+        <!-- Top Navigation Header -->
+        <header class="app-header">
+            <div class="brand">
+                <div class="brand-icon">🎙️</div>
+                <div class="brand-text">
+                    <h1>Voice Transport Enquiry</h1>
+                    <p class="subtitle">AI & Voice-Powered Transport Assistance System</p>
+                </div>
+            </div>
+
+            <div class="header-controls">
+                <div id="dbStatusBadge" class="status-badge connecting">
+                    <span class="status-dot"></span>
+                    <span id="dbStatusText">Connecting DB...</span>
+                </div>
+
+                <button id="accessibilityToggle" class="btn btn-accessibility" title="Toggle Visually Impaired Accessibility Mode">
+                    <span class="icon">👁️</span>
+                    <span class="btn-text">Accessibility Mode</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <nav class="nav-tabs" role="tablist">
+            <button class="tab-btn active" data-tab="voiceTab" role="tab">
+                <span class="tab-icon">🎙️</span> Voice Assistant
+            </button>
+            <button class="tab-btn" data-tab="scheduleTab" role="tab">
+                <span class="tab-icon">🚌</span> Transport Schedules
+            </button>
+            <button class="tab-btn" data-tab="analyticsTab" role="tab">
+                <span class="tab-icon">📊</span> SQL Views & Analytics
+            </button>
+            <button class="tab-btn" data-tab="sandboxTab" role="tab">
+                <span class="tab-icon">⚡</span> Triggers & Procedures
+            </button>
+            <button class="tab-btn" data-tab="usersTab" role="tab">
+                <span class="tab-icon">👥</span> Users & Query Logs
+            </button>
+        </nav>
+
+        <!-- Notification Banner -->
+        <div id="notificationBanner" class="notification-banner hidden">
+            <span class="banner-icon">🔔</span>
+            <span id="notificationMessage" class="banner-text">Popular route queried!</span>
+            <button class="banner-close" onclick="closeBanner()">✕</button>
+        </div>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            
+            <!-- TAB 1: Voice Assistant -->
+            <section id="voiceTab" class="tab-content active">
+                <div class="voice-hero-card">
+                    <div class="voice-hero-header">
+                        <h2>Voice-Based Transport Query</h2>
+                        <p>Speak your transport query clearly into your microphone. Specially optimized for visually impaired users with spoken feedback.</p>
+                    </div>
+
+                    <!-- User Selection for Logged Queries -->
+                    <div class="user-select-bar">
+                        <label for="activeUserSelect"><strong>Inquiring User:</strong></label>
+                        <select id="activeUserSelect" class="form-select">
+                            <option value="1">Sita (User #1)</option>
+                            <option value="2">Rama (User #2)</option>
+                            <option value="3">Krishna (User #3)</option>
+                            <option value="4">Arjun (User #4)</option>
+                            <option value="5">Bheem (User #5)</option>
+                        </select>
+                    </div>
+
+                    <!-- Mic Action Area -->
+                    <div class="mic-container">
+                        <button id="micBtn" class="mic-button" aria-label="Tap to speak transport query">
+                            <div class="mic-icon">🎙️</div>
+                            <div class="sound-wave">
+                                <span></span><span></span><span></span><span></span><span></span>
+                            </div>
+                        </button>
+                        <div id="micStatusText" class="mic-status-text">Click microphone to start speaking</div>
+                    </div>
+
+                    <!-- Speech Transcription Box -->
+                    <div class="speech-box">
+                        <div class="speech-label">
+                            <span>TRANSCRIPT</span>
+                            <span id="speechStateBadge" class="badge">Idle</span>
+                        </div>
+                        <div id="speechTranscript" class="speech-transcript-text">"e.g., Show buses from Guntur to Vijayawada"</div>
+                    </div>
+
+                    <!-- Quick Voice Prompt Suggestions -->
+                    <div class="quick-prompts">
+                        <span class="prompts-label">Try Voice Prompts:</span>
+                        <button class="prompt-chip" onclick="executeQuickPrompt('Bus from Guntur to Vijayawada')">🚌 Bus from Guntur to Vijayawada</button>
+                        <button class="prompt-chip" onclick="executeQuickPrompt('Train from Hyderabad to Vijayawada')">🚆 Train from Hyderabad to Vijayawada</button>
+                        <button class="prompt-chip" onclick="executeQuickPrompt('Buses to Visakhapatnam')">🚌 Buses to Visakhapatnam</button>
+                        <button class="prompt-chip" onclick="executeQuickPrompt('Train from Guntur to Chennai')">🚆 Train to Chennai</button>
+                    </div>
+
+                    <!-- Text-To-Speech Output Box -->
+                    <div id="ttsBox" class="tts-box hidden">
+                        <div class="tts-header">
+                            <span class="tts-icon">🔊</span>
+                            <span class="tts-title">Spoken Voice Response</span>
+                            <button id="replayTtsBtn" class="btn btn-sm btn-outline">Replay Voice 🔊</button>
+                        </div>
+                        <p id="ttsText" class="tts-text"></p>
+                    </div>
+
+                    <!-- Voice Query Results Grid -->
+                    <div id="voiceResultsSection" class="results-section hidden">
+                        <h3>Query Results (<span id="voiceResultsCount">0</span>)</h3>
+                        <div id="voiceResultsGrid" class="results-grid"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2: Transport Schedules -->
+            <section id="scheduleTab" class="tab-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Transport Schedules & Route Directory</h2>
+                        <p>Search across 50 available bus and train schedules with real-time departure, arrival, and fare details.</p>
+                    </div>
+
+                    <!-- Search Filter Bar -->
+                    <div class="filter-bar">
+                        <div class="filter-group">
+                            <label>Transport Mode</label>
+                            <select id="filterType" class="form-select">
+                                <option value="All">All Modes (Bus & Train)</option>
+                                <option value="Bus">Bus Only</option>
+                                <option value="Train">Train Only</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label>Origin City</label>
+                            <input type="text" id="filterFrom" class="form-input" placeholder="e.g. Guntur">
+                        </div>
+
+                        <div class="filter-group">
+                            <label>Destination City</label>
+                            <input type="text" id="filterTo" class="form-input" placeholder="e.g. Vijayawada">
+                        </div>
+
+                        <div class="filter-group">
+                            <label>Max Fare (₹)</label>
+                            <input type="number" id="filterFare" class="form-input" placeholder="Max ₹" step="50">
+                        </div>
+
+                        <div class="filter-group filter-actions">
+                            <button id="btnSearchSchedules" class="btn btn-primary">🔍 Search</button>
+                            <button id="btnResetFilters" class="btn btn-secondary">Reset</button>
+                        </div>
+                    </div>
+
+                    <!-- Table -->
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Type</th>
+                                    <th>Route</th>
+                                    <th>Departure</th>
+                                    <th>Arrival</th>
+                                    <th>Capacity</th>
+                                    <th>Fare (₹)</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transportTableBody">
+                                <tr><td colspan="8" class="text-center">Loading transport routes...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 3: SQL Views & Analytics -->
+            <section id="analyticsTab" class="tab-content">
+                <div class="analytics-grid">
+                    
+                    <!-- View 1: Daily User Queries -->
+                    <div class="card">
+                        <h3>View 1: `daily_user_queries`</h3>
+                        <p class="code-snippet">SELECT DATE(query_time) AS query_date, COUNT(*) AS total_queries FROM Queries GROUP BY DATE(query_time);</p>
+                        <div class="table-responsive sm-table">
+                            <table class="data-table">
+                                <thead><tr><th>Query Date</th><th>Total Queries</th></tr></thead>
+                                <tbody id="viewDailyQueriesBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- View 2: Transport Usage Analytics -->
+                    <div class="card">
+                        <h3>View 2: `transport_usage`</h3>
+                        <p class="code-snippet">SELECT t.type, t.route, COUNT(q.query_id) AS query_count FROM Transport t LEFT JOIN Queries q ON t.transport_id = q.transport_id GROUP BY t.type, t.route ORDER BY query_count DESC;</p>
+                        <div class="table-responsive sm-table">
+                            <table class="data-table">
+                                <thead><tr><th>Type</th><th>Route</th><th>Query Count</th></tr></thead>
+                                <tbody id="viewUsageBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- View 3: Frequently Queried Routes -->
+                    <div class="card">
+                        <h3>View 3: `frequent_routes`</h3>
+                        <p class="code-snippet">SELECT t.route, COUNT(q.query_id) AS query_count FROM Transport t JOIN Queries q ON t.transport_id = q.transport_id GROUP BY t.route ORDER BY query_count DESC LIMIT 10;</p>
+                        <div class="table-responsive sm-table">
+                            <table class="data-table">
+                                <thead><tr><th>Route</th><th>Enquiries Count</th></tr></thead>
+                                <tbody id="viewFrequentBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Join & Nested SQL Queries -->
+                    <div class="card full-width">
+                        <h3>Join, Nested & Aggregate SQL Queries</h3>
+                        
+                        <div class="query-box-group">
+                            <div class="query-box">
+                                <h4>1. Bus Routes from Guntur (JOIN / LIKE Query)</h4>
+                                <div id="gunturBusesResults" class="query-results-mini">Loading...</div>
+                            </div>
+
+                            <div class="query-box">
+                                <h4>2. Users Enquired About Hyderabad (Nested Subquery)</h4>
+                                <div id="hyderabadEnquirersResults" class="query-results-mini">Loading...</div>
+                            </div>
+
+                            <div class="query-box">
+                                <h4>3. Routes with Above-Average Fare (Nested Subquery)</h4>
+                                <div id="aboveAvgFaresResults" class="query-results-mini">Loading...</div>
+                            </div>
+
+                            <div class="query-box">
+                                <h4>4. Average Fare by Transport Type (Aggregate Query)</h4>
+                                <div id="fareByTypeResults" class="query-results-mini">Loading...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 4: Triggers & Stored Procedures Sandbox -->
+            <section id="sandboxTab" class="tab-content">
+                <div class="sandbox-grid">
+                    
+                    <!-- Stored Procedure 1 -->
+                    <div class="card">
+                        <h3>Function: `get_next_available_transport`</h3>
+                        <p class="subtitle">Returns next available transport for route departing after time.</p>
+                        <div class="form-group">
+                            <label>Route</label>
+                            <input type="text" id="spNextRoute" class="form-input" value="Guntur to Vijayawada">
+                        </div>
+                        <div class="form-group">
+                            <label>Time (HH:MM:SS)</label>
+                            <input type="text" id="spNextTime" class="form-input" value="08:30:00">
+                        </div>
+                        <button id="btnTestNextTransport" class="btn btn-primary">Run Function</button>
+                        <div id="spNextOutput" class="output-console hidden"></div>
+                    </div>
+
+                    <!-- Stored Procedure 2 -->
+                    <div class="card">
+                        <h3>Function: `calculate_journey_time`</h3>
+                        <p class="subtitle">Calculates precise TIMEDIFF between departure and arrival.</p>
+                        <div class="form-group">
+                            <label>Transport ID</label>
+                            <input type="number" id="spJourneyId" class="form-input" value="1">
+                        </div>
+                        <button id="btnTestJourneyTime" class="btn btn-primary">Run Function</button>
+                        <div id="spJourneyOutput" class="output-console hidden"></div>
+                    </div>
+
+                    <!-- Trigger Test 1: Contact Format -->
+                    <div class="card">
+                        <h3>Trigger 1: `validate_user_contact`</h3>
+                        <p class="subtitle">Ensures user contact is exactly 10 digits; throws SQL Exception SQLSTATE '45000' otherwise.</p>
+                        <div class="form-group">
+                            <label>User Name</label>
+                            <input type="text" id="trigUserName" class="form-input" value="Test User">
+                        </div>
+                        <div class="form-group">
+                            <label>Contact Number (Try '123' to trigger error!)</label>
+                            <input type="text" id="trigUserContact" class="form-input" value="12345">
+                        </div>
+                        <button id="btnTestTriggerContact" class="btn btn-danger">Test Trigger</button>
+                        <div id="trigContactOutput" class="output-console hidden"></div>
+                    </div>
+
+                    <!-- Trigger Test 2: Transport Timing -->
+                    <div class="card">
+                        <h3>Trigger 2: `validate_transport_timing`</h3>
+                        <p class="subtitle">Rejects transport if departure_time >= arrival_time.</p>
+                        <div class="form-group">
+                            <label>Departure Time</label>
+                            <input type="text" id="trigDepTime" class="form-input" value="14:00:00">
+                        </div>
+                        <div class="form-group">
+                            <label>Arrival Time (Try '10:00:00' to trigger error!)</label>
+                            <input type="text" id="trigArrTime" class="form-input" value="10:00:00">
+                        </div>
+                        <button id="btnTestTriggerTiming" class="btn btn-danger">Test Trigger</button>
+                        <div id="trigTimingOutput" class="output-console hidden"></div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- TAB 5: Users & Query Audit Logs -->
+            <section id="usersTab" class="tab-content">
+                <div class="two-col-grid">
+                    <!-- Users Directory -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Users Directory (50 Pre-populated Users)</h3>
+                            <input type="text" id="searchUsersInput" class="form-input" placeholder="Search user name...">
+                        </div>
+                        <div class="table-responsive sm-table">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Name</th>
+                                        <th>Contact</th>
+                                        <th>Last Query Time</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="usersTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Query Audit Logs -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Query Audit Logs (`Queries` Table)</h3>
+                            <button id="btnRefreshQueries" class="btn btn-sm btn-secondary">🔄 Refresh</button>
+                        </div>
+                        <div class="table-responsive sm-table">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>QID</th>
+                                        <th>User Name</th>
+                                        <th>Transport Route</th>
+                                        <th>Query Time</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="queriesTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <p>Voice-Based Transport Enquiry System &copy; 2026 | Built with Node.js, Express, Web Speech API & MySQL/SQLite</p>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
