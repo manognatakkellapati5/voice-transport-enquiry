@@ -13,5 +13,10 @@
     "express": "^4.19.2",
     "mysql2": "^3.9.7",
     "sqlite3": "^5.1.7"
+  },
+  "overrides": {
+    "tar": "^7.4.3",
+    "brace-expansion": "^1.1.17",
+    "@tootallnate/once": "^2.0.1"
   }
 }
